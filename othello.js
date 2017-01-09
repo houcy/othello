@@ -7,7 +7,7 @@ function assert(condition) {
 NUM_ROWS = 8;
 NUM_COLS = 8;
 
-CAPTURE_DELAY = 400;
+CAPTURE_DELAY = 700;
 
 MIN_MAX_DEPTH = 6;
 
@@ -157,8 +157,10 @@ class Othello {
         return newGame;
     }
 
-    isMoveInvalid(row, col) {
-        return this.matrix[row][col] != EMPTY || this.gameOver != undefined;
+    isMoveInvalid(row, col, numCaptured) {
+        return this.matrix[row][col] != EMPTY ||
+               this.gameOver != undefined ||
+               numCaptured == 0;
     }
 
     getCell(row, col) {
@@ -225,25 +227,21 @@ class Othello {
         assert(row >= 0 && row < this.numRows);
         assert(col >= 0 && col < this.numCols);
 
-        if (this.isMoveInvalid(row, col)) {
-            return new Move(false, undefined, undefined, undefined, undefined, undefined);
-        } 
-
-        this.matrix[row][col] = this.player;
-
-        // TODO
-        //this.checkGameOver();
 
         var captured = this.tryCapture(row, col);
 
-        if (captured.length == 0) {
+        if (this.isMoveInvalid(row, col, captured.length)) {
             return new Move(false, undefined, undefined, undefined, undefined, undefined);
-        }
+        } 
 
         for (var i = 0; i < captured.length; i++) {
             var [r, c] = captured[i];
             this.matrix[r][c] = this.player;
         } 
+
+        this.matrix[row][col] = this.player;
+
+        this.checkGameOver();
 
         var move = new Move(true, row, col, this.player, captured, this.gameOver);
 
@@ -257,7 +255,7 @@ class Othello {
     }
 
     checkGameOver() {
-        // TODO
+        
     }
 }
 
@@ -426,7 +424,11 @@ class Viz {
             }
         }
 
-        window.setTimeout(drawCapture, CAPTURE_DELAY);
+        if (move.player == COMPUTER_PLAYER) {
+            window.setTimeout(drawCapture, CAPTURE_DELAY);
+        } else {
+            drawCapture();
+        }
 
         if (move.gameOver != undefined &&
             move.gameOver.victoryCells != undefined) {
