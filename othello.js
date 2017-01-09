@@ -7,8 +7,7 @@ function assert(condition) {
 NUM_ROWS = 8;
 NUM_COLS = 8;
 
-MIN_MAX_DEPTH = 3;
-MIN_MAX_THREE_WEIGHT = 10;
+MIN_MAX_DEPTH = 6;
 
 EMPTY = 0;
 
@@ -281,9 +280,23 @@ class Node {
     }
 
 
-    // TODO
+    countPieces(player) {
+        var count = 0;
+
+        for (var row = 0; row < this.game.numRows; row++) {
+            for (var col = 0; col < this.game.numCols; col++) {
+                if (this.game.matrix[row][col] == player) {
+                    count += 1;
+                }
+            }
+        }
+
+        return count;
+    }
+
     getNonLeafScore() {
-        return 0;
+        return this.countPieces(MAXIMIZING_PLAYER) -
+               this.countPieces(MINIMIZING_PLAYER)
     }
 
     getScore() {
