@@ -7,6 +7,8 @@ function assert(condition) {
 NUM_ROWS = 8;
 NUM_COLS = 8;
 
+CAPTURE_DELAY = 400;
+
 MIN_MAX_DEPTH = 6;
 
 EMPTY = 0;
@@ -279,7 +281,6 @@ class Node {
         return this.game.gameOver != undefined;
     }
 
-
     countPieces(player) {
         var count = 0;
 
@@ -409,17 +410,23 @@ class Viz {
         $("#" + cellId).append(imgTag);
 
 
-        for (var i = 0; i < move.captured.length; i++) {
-            var [row, col] = move.captured[i];
-            console.log(row, col);
+        var THIS = this;
 
-            var cellId = Viz.getCellId(row, col);
-            var imgTag = this.getImgTag(move.player);
+        function drawCapture() {
+            for (var i = 0; i < move.captured.length; i++) {
+                var [row, col] = move.captured[i];
+                console.log(row, col);
 
-            $("#" + cellId + " img").remove();
-            $("#" + cellId).append(imgTag);
+                var cellId = Viz.getCellId(row, col);
+                var imgTag = THIS.getImgTag(move.player);
 
+                $("#" + cellId + " img").remove();
+                $("#" + cellId).append(imgTag);
+
+            }
         }
+
+        window.setTimeout(drawCapture, CAPTURE_DELAY);
 
         if (move.gameOver != undefined &&
             move.gameOver.victoryCells != undefined) {
