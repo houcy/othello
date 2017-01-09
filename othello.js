@@ -195,14 +195,28 @@ class Othello {
         } else {
             return [];
         }
-
-
     }
 
     tryCapture(row, col) {
         var capturedUp = this.tryCaptureDrDc(row, col, -1, 0);
+        var capturedDown = this.tryCaptureDrDc(row, col, 1, 0);
+        var capturedLeft = this.tryCaptureDrDc(row, col, 0, -1);
+        var capturedRight = this.tryCaptureDrDc(row, col, 0, 1);
 
-        return capturedUp;
+        var capturedDiagonal1 = this.tryCaptureDrDc(row, col, 1, 1);
+        var capturedDiagonal2 = this.tryCaptureDrDc(row, col, 1, -1);
+        var capturedDiagonal3 = this.tryCaptureDrDc(row, col, -1, 1);
+        var capturedDiagonal4 = this.tryCaptureDrDc(row, col, -1, -1);
+
+
+        return capturedUp
+            .concat(capturedDown)
+            .concat(capturedLeft)
+            .concat(capturedRight)
+            .concat(capturedDiagonal1)
+            .concat(capturedDiagonal2)
+            .concat(capturedDiagonal3)
+            .concat(capturedDiagonal4)
     }
 
     makeMove(row, col) {
@@ -220,6 +234,15 @@ class Othello {
         //this.checkGameOver();
 
         var captured = this.tryCapture(row, col);
+
+        if (captured.length == 0) {
+            return new Move(false, undefined, undefined, undefined, undefined, undefined);
+        }
+
+        for (var i = 0; i < captured.length; i++) {
+            var [r, c] = captured[i];
+            this.matrix[r][c] = this.player;
+        } 
 
         var move = new Move(true, row, col, this.player, captured, this.gameOver);
 
