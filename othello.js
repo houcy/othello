@@ -24,11 +24,14 @@ MINIMIZING_PLAYER = PLAYER_TWO;
 FIRST_PLAYER = PLAYER_ONE;
 
 var COMPUTER_PLAYER;
+var HUMAN_PLAYER;
 
 if (Math.random() < 0.5) {
     COMPUTER_PLAYER = PLAYER_ONE;
+    HUMAN_PLAYER = PLAYER_TWO;
 } else {
     COMPUTER_PLAYER = PLAYER_TWO;
+    HUMAN_PLAYER = PLAYER_ONE;
 }
 
 /*******************************************************************************
@@ -38,13 +41,15 @@ class Move {
     // valid == true iff the move results in change in game state
     // (row, col) are the coordinates that player added their mark
     // player is either PLAYER_ONE or PLAYER_TWO, depending on who made the move
+    // TODO: document captured
     // gameOver is either undefined (which signifies the game has not concluded)
     // or gameOver is a GameOver object, representing the conclusion of the game
-    constructor(valid, row, col, player, gameOver) {
+    constructor(valid, row, col, player, captured, gameOver) {
         this.valid = valid;
         this.row = row;
         this.col = col;
         this.player = player;
+        this.captured = captured;
         this.gameOver = gameOver;
     }
 }
@@ -115,7 +120,6 @@ class Othello {
             this.matrix[move.row][move.col] = move.player;
         }
 
-
         // this.player always equals the player (either PLAYER_ONE or
         // PLAYER_TWO) who has the next move.
         this.player = player;
@@ -129,10 +133,10 @@ class Othello {
 
     getOpeningMoves() {
         return [
-            new Move(true, this.numRows / 2, this.numCols / 2, PLAYER_ONE, undefined),
-            new Move(true, this.numRows / 2 - 1, this.numCols / 2 - 1, PLAYER_ONE, undefined),
-            new Move(true, this.numRows / 2 - 1, this.numCols / 2, PLAYER_TWO, undefined),
-            new Move(true, this.numRows / 2, this.numCols / 2 - 1, PLAYER_TWO, undefined),
+            new Move(true, this.numRows / 2, this.numCols / 2, PLAYER_ONE, [], undefined),
+            new Move(true, this.numRows / 2 - 1, this.numCols / 2 - 1, PLAYER_ONE, [], undefined),
+            new Move(true, this.numRows / 2 - 1, this.numCols / 2, PLAYER_TWO, [], undefined),
+            new Move(true, this.numRows / 2, this.numCols / 2 - 1, PLAYER_TWO, [], undefined),
         ]
     }
 
@@ -156,13 +160,58 @@ class Othello {
         return this.matrix[row][col] != EMPTY || this.gameOver != undefined;
     }
 
+    getCell(row, col) {
+        if (!(row >= 0 && row < this.numRows &&
+               col >= 0 && col < this.numCols)) {
+            return undefined;
+        } else {
+            return this.matrix[row][col];
+        }
+    }
+
+    tryCaptureDrDc(row, col, dr, dc) {
+
+        var otherPlayer;
+
+        if (this.player == PLAYER_ONE) {
+            otherPlayer = PLAYER_TWO;
+        } else {
+            otherPlayer = PLAYER_ONE;
+        }
+
+        var captured = [];
+
+        row += dr;
+        col += dc;
+
+        while (this.getCell(row, col) == otherPlayer) {
+            captured.push([row, col]);
+            row += dr;
+            col += dc;
+        }
+
+        if (this.getCell(row, col) == this.player)  {
+            return captured;
+        } else {
+            return [];
+        }
+
+
+    }
+
+    tryCapture(row, col) {
+        var capturedUp = this.tryCaptureDrDc(row, col, -1, 0);
+
+        return capturedUp;
+    }
+
     makeMove(row, col) {
 
         assert(row >= 0 && row < this.numRows);
         assert(col >= 0 && col < this.numCols);
 
         if (this.isMoveInvalid(row, col)) {
-            return new Move(false, undefined, undefined, undefined, undefined);
+            return new Move(false, undefined, undefined, undefined, undefined, undefined);
         } 
 
         this.matrix[row][col] = this.player;
@@ -170,7 +219,9 @@ class Othello {
         // TODO
         //this.checkGameOver();
 
-        var move = new Move(true, row, col, this.player, this.gameOver);
+        var captured = this.tryCapture(row, col);
+
+        var move = new Move(true, row, col, this.player, captured, this.gameOver);
 
         if (this.player == PLAYER_ONE) {
             this.player = PLAYER_TWO;
@@ -320,6 +371,19 @@ class Viz {
         var imgTag = this.getImgTag(move.player);
 
         $("#" + cellId).append(imgTag);
+
+
+        for (var i = 0; i < move.captured.length; i++) {
+            var [row, col] = move.captured[i];
+            console.log(row, col);
+
+            var cellId = Viz.getCellId(row, col);
+            var imgTag = this.getImgTag(move.player);
+
+            $("#" + cellId + " img").remove();
+            $("#" + cellId).append(imgTag);
+
+        }
 
         if (move.gameOver != undefined &&
             move.gameOver.victoryCells != undefined) {
