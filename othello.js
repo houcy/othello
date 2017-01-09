@@ -7,30 +7,28 @@ function assert(condition) {
 NUM_ROWS = 8;
 NUM_COLS = 8;
 
-MIN_MAX_DEPTH = 6;
+MIN_MAX_DEPTH = 3;
 MIN_MAX_THREE_WEIGHT = 10;
 
 EMPTY = 0;
 
 PLAYER_ONE = 1;
-PLAYER_ONE_COLOR = "pink";
 PLAYER_ONE_FILENAME = "player-1.png";
 
 PLAYER_TWO = 2;
-PLAYER_TWO_COLOR = "lightblue";
 PLAYER_TWO_FILENAME = "player-2.png";
 
 MAXIMIZING_PLAYER = PLAYER_ONE;
 MINIMIZING_PLAYER = PLAYER_TWO;
 
-COMPUTER_PLAYER = PLAYER_TWO;
+FIRST_PLAYER = PLAYER_ONE;
 
-var FIRST_PLAYER = undefined;
+var COMPUTER_PLAYER;
 
 if (Math.random() < 0.5) {
-    FIRST_PLAYER = PLAYER_ONE;
+    COMPUTER_PLAYER = PLAYER_ONE;
 } else {
-    FIRST_PLAYER = PLAYER_TWO;
+    COMPUTER_PLAYER = PLAYER_TWO;
 }
 
 /*******************************************************************************
