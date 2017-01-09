@@ -32,7 +32,7 @@ if (Math.random() < 0.5) {
 }
 
 /*******************************************************************************
- * Move is the interface between ConnectFour and Viz
+ * Move is the interface between Othello and Viz
  ******************************************************************************/
 class Move {
     // valid == true iff the move results in change in game state
@@ -70,44 +70,33 @@ class GameOver {
     // if this.victor == PLAYER_ONE, then that indicates PLAYER_ONE won the game
     // if this.victor == PLAYER_TWO, then that indicates PLAYER_TWO won the game
     //
-    // this.victoryCells
+    // this.count
     // =================
-    // this.victoryCells is either:
-    //      (A) undefined
-    //      (B) a list of four [row, col] pairs
-    //
-    // if this.victoryCells == undefined, then that indicates the game ended in
-    // a draw.
-    //
-    // if this.victoryCells is a list of four [row, col] pairs, then that
-    // indicates the game has ended in a victory. Furthermore the four 
-    // [row, col] pairs indicate which cells contain the winning 4-in-a-row
-    // pieces.
-    // 
-    // As an example: this.victoryCells might equal [[0,0], [1,1], [2, 2],
-    // [3, 3]].
-    // This denotes that (row 0, col 0), (row 1, col 1), (row 2, col 2), and
-    // (row 3, col 3) constitute the four cells that contain the winning
-    // 4-in-a-row pieces.
-    constructor(victor, victoryCells) {
+    // this.count[PLAYER_ONE] == the number of pieces that belong to PLAYER_ONE
+    // this.count[PLAYER_TWO] == the number of pieces that belong to PLAYER_TWO
+    constructor(victor, count) {
         this.victor = victor;
-        this.victoryCells = victoryCells;
+        this.count = count;
 
         // Make GameOver immutable
         Object.freeze(this);
-        Object.freeze(this.victor);
-        Object.freeze(this.victoryCells);
+        Object.freeze(this.count);
     }
 }
 
 /*******************************************************************************
- * ConnectFour class
+ * Othello class
  ******************************************************************************/
-class ConnectFour {
+class Othello {
 
     // player is either PLAYER_ONE or PLAYER_TWO, and indicates which player has
     // the next move
     constructor(player, numRows, numCols) {
+
+        assert(numRows % 2 == 0);
+        assert(numCols % 2 == 0);
+        assert(player == PLAYER_ONE || player == PLAYER_TWO);
+
         this.numRows = numRows;
         this.numCols = numCols;
 
@@ -119,7 +108,8 @@ class ConnectFour {
             }
         }
 
-        assert(player == PLAYER_ONE || player == PLAYER_TWO);
+        // TODO: draw initial config into matrix
+
 
         // this.player always equals the player (either PLAYER_ONE or
         // PLAYER_TWO) who has the next move.
@@ -133,7 +123,7 @@ class ConnectFour {
     }
 
     deepCopy() {
-        var newGame = new ConnectFour(this.player, this.numRows, this.numCols);
+        var newGame = new Othello(this.player, this.numRows, this.numCols);
 
         for (var row = 0; row < this.numRows; row++) {
             for (var col = 0; col < this.numCols; col++) {
@@ -148,21 +138,23 @@ class ConnectFour {
         return newGame;
     }
 
+    isMoveInvalid(row, col) {
+        return this.matrix[row][col] != EMPTY || this.gameOver != undefined;
+    }
+
     makeMove(row, col) {
 
         assert(row >= 0 && row < this.numRows);
         assert(col >= 0 && col < this.numCols);
 
-        if (this.matrix[row][col] != EMPTY ||
-            this.gameOver != undefined ||
-            (row < this.numRows - 1 && this.matrix[row + 1][col] == EMPTY))
-            {
+        if (this.isMoveInvalid(row, col)) {
             return new Move(false, undefined, undefined, undefined, undefined);
         } 
 
         this.matrix[row][col] = this.player;
 
-        this.checkGameOver();
+        // TODO
+        //this.checkGameOver();
 
         var move = new Move(true, row, col, this.player, this.gameOver);
 
@@ -175,95 +167,8 @@ class ConnectFour {
         return move;
     }
 
-    getCellValue(row, col) {
-        if (row >= 0 &&
-            row < this.numRows &
-            col >= 0 &
-            col < this.numCols) {
-            return this.matrix[row][col];
-        } else {
-            return undefined;
-        }
-    }
-
-    checkVictorHorizontal(row, col) {
-        var a = this.getCellValue(row, col);
-        var b = this.getCellValue(row, col + 1);
-        var c = this.getCellValue(row, col + 2);
-        var d = this.getCellValue(row, col + 3);
-        if (a == b && a == c && a == d) {
-            var victoryCells =
-                [[row, col], [row, col + 1], [row, col + 2], [row, col + 3]];
-            this.gameOver = new GameOver(a, victoryCells);
-        }
-    }
-
-    checkVictorVertical(row, col) {
-        var a = this.getCellValue(row, col);
-        var b = this.getCellValue(row + 1, col);
-        var c = this.getCellValue(row + 2, col);
-        var d = this.getCellValue(row + 3, col);
-        if (a == b && a == c && a == d) {
-            var victoryCells =
-                [[row, col], [row + 1, col], [row + 2, col], [row + 3, col]];
-            this.gameOver = new GameOver(a, victoryCells);
-        }
-    }
-
-    checkVictorDiagonal(row, col) {
-        var a = this.getCellValue(row, col);
-        var b = this.getCellValue(row + 1, col + 1);
-        var c = this.getCellValue(row + 2, col + 2);
-        var d = this.getCellValue(row + 3, col + 3);
-        if (a == b && a == c && a == d) {
-            var victoryCells =
-                [[row, col], [row + 1, col + 1], [row + 2, col + 2],
-                 [row + 3, col + 3]];
-            this.gameOver = new GameOver(a, victoryCells);
-        }
-
-        var a = this.getCellValue(row, col);
-        var b = this.getCellValue(row + 1, col - 1);
-        var c = this.getCellValue(row + 2, col - 2);
-        var d = this.getCellValue(row + 3, col - 3);
-        if (a == b && a == c && a == d) {
-            var victoryCells =
-                [[row, col], [row + 1, col - 1], [row + 2, col - 2],
-                 [row + 3, col - 3]];
-            this.gameOver = new GameOver(a, victoryCells);
-        }
-    }
-
-
-    checkVictor(row, col) {
-        this.checkVictorHorizontal(row, col);
-        this.checkVictorVertical(row, col);
-        this.checkVictorDiagonal(row, col);
-    }
-
-    checkDraw() {
-        for (var row = 0; row < this.numRows; row++) {
-            for (var col = 0; col < this.numCols; col++) {
-                if (this.matrix[row][col] == EMPTY) {
-                    return;
-                }
-            }
-        }
-
-        this.gameOver = new GameOver(undefined, undefined);
-    }
-
     checkGameOver() {
-
-        this.checkDraw();
-
-        for (var row = 0; row < this.numRows; row++) {
-            for (var col =0; col < this.numCols; col++) {
-                if (this.matrix[row][col] != EMPTY) {
-                    this.checkVictor(row, col);
-                }
-            }
-        }
+        // TODO
     }
 }
 
@@ -287,179 +192,10 @@ class Node {
         return this.game.gameOver != undefined;
     }
 
-    countThreeHorizontal(player, row, col) {
-        var beforeA = this.game.getCellValue(row, col -1);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row, col + 1);
-        var c = this.game.getCellValue(row, col + 2);
-        var afterC = this.game.getCellValue(row, col + 3);
 
-        if (a == player && a == b && a == c &&
-            (beforeA == EMPTY || afterC == EMPTY)) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    countThreeVertical(player, row, col) {
-        var beforeA = this.game.getCellValue(row - 1, col);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row + 1, col);
-        var c = this.game.getCellValue(row + 2, col);
-        var afterC = this.game.getCellValue(row + 3, col);
-
-        if (a == player && a == b && a == c &&
-            (beforeA == EMPTY || afterC == EMPTY)) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    countThreeDiagonal(player, row, col) {
-        var count = 0;
-
-        var beforeA = this.game.getCellValue(row - 1, col - 1);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row + 1, col + 1);
-        var c = this.game.getCellValue(row + 2, col + 2);
-        var afterC = this.game.getCellValue(row + 3, col + 3);
-        if (a == player && a == b && a == c &&
-            (beforeA == EMPTY || afterC == EMPTY)) {
-            count += 1;
-        }
-
-        var beforeA = this.game.getCellValue(row - 1, col + 1);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row + 1, col - 1);
-        var c = this.game.getCellValue(row + 2, col - 2);
-        var afterC = this.game.getCellValue(row + 3, col - 3);
-        if (a == player && a == b && a == c &&
-            (beforeA == EMPTY || afterC == EMPTY)) {
-            count += 1;
-        }
-
-        return count;
-    }
-
-
-    countTwoHorizontal(player, row, col) {
-        var beforeBeforeA = this.game.getCellValue(row, col - 2);
-        var beforeA = this.game.getCellValue(row, col - 1);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row, col + 1);
-        var afterB = this.game.getCellValue(row, col + 2);
-        var afterAfterB = this.game.getCellValue(row, col + 3);
-
-        var goodSpacing =
-            (beforeA == EMPTY && beforeBeforeA == EMPTY) ||
-            (beforeA == EMPTY && afterB == EMPTY) ||
-            (afterB == EMPTY && afterAfterB == EMPTY);
-
-        if (a == player && a == b && goodSpacing) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    countTwoVertical(player, row, col) {
-        var beforeBeforeA = this.game.getCellValue(row - 2, col);
-        var beforeA = this.game.getCellValue(row - 1, col);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row + 1, col);
-        var afterB = this.game.getCellValue(row + 2, col);
-        var afterAfterB = this.game.getCellValue(row + 3, col);
-
-        var goodSpacing =
-            (beforeA == EMPTY && beforeBeforeA == EMPTY) ||
-            (beforeA == EMPTY && afterB == EMPTY) ||
-            (afterB == EMPTY && afterAfterB == EMPTY);
-
-        if (a == player && a == b && goodSpacing) {
-            return 1;
-        } else {
-            return 0;
-        }
-    }
-
-    countTwoDiagonal(player, row, col) {
-        var count = 0;
-
-        var beforeBeforeA = this.game.getCellValue(row - 2, col -2);
-        var beforeA = this.game.getCellValue(row - 1, col - 1);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row + 1, col + 1);
-        var afterB = this.game.getCellValue(row + 2, col + 2);
-        var afterAfterB = this.game.getCellValue(row + 3, col + 3);
-
-        var goodSpacing =
-            (beforeA == EMPTY && beforeBeforeA == EMPTY) ||
-            (beforeA == EMPTY && afterB == EMPTY) ||
-            (afterB == EMPTY && afterAfterB == EMPTY);
-
-        if (a == player && a == b && goodSpacing) {
-            count += 1;
-        }
-
-        var beforeBeforeA = this.game.getCellValue(row - 2, col +2);
-        var beforeA = this.game.getCellValue(row - 1, col + 1);
-        var a = this.game.getCellValue(row, col);
-        var b = this.game.getCellValue(row + 1, col - 1);
-        var afterB = this.game.getCellValue(row + 2, col - 2);
-        var afterAfterB = this.game.getCellValue(row + 3, col - 3);
-
-        var goodSpacing =
-            (beforeA == EMPTY && beforeBeforeA == EMPTY) ||
-            (beforeA == EMPTY && afterB == EMPTY) ||
-            (afterB == EMPTY && afterAfterB == EMPTY);
-
-        if (a == player && a == b && goodSpacing) {
-            count += 1;
-        }
-
-        return count;
-    }
-
-    countThree(player) {
-        var count = 0;
-
-        for (var row = 0; row < this.game.numRows; row++) {
-            for (var col = 0; col < this.game.numCols; col++) {
-                count += this.countThreeHorizontal(player, row, col) +
-                         this.countThreeVertical(player, row, col) +
-                         this.countThreeDiagonal(player, row, col);
-            }
-        }
-
-        return count;
-    }
-
-    countTwo(player) {
-        var count = 0;
-
-        for (var row = 0; row < this.game.numRows; row++) {
-            for (var col = 0; col < this.game.numCols; col++) {
-                count += this.countTwoHorizontal(player, row, col) +
-                         this.countTwoVertical(player, row, col) +
-                         this.countTwoDiagonal(player, row, col);
-            }
-        }
-
-        return count;
-    }
-
+    // TODO
     getNonLeafScore() {
-        var scorePlayerMax =
-            this.countThree(MAXIMIZING_PLAYER) * MIN_MAX_THREE_WEIGHT +
-            this.countTwo(MAXIMIZING_PLAYER);
-
-        var scorePlayerMin =
-            this.countThree(MINIMIZING_PLAYER) * MIN_MAX_THREE_WEIGHT +
-            this.countTwo(MINIMIZING_PLAYER);
-
-        return scorePlayerMax - scorePlayerMin;
+        return 0;
     }
 
     getScore() {
@@ -574,22 +310,12 @@ class Viz {
         if (move.gameOver != undefined &&
             move.gameOver.victoryCells != undefined) {
 
-            var color;
-
-            if (move.gameOver.victor == PLAYER_ONE) {
-                color = PLAYER_ONE_COLOR;
-            } else if (move.gameOver.victor == PLAYER_TWO) {
-                color = PLAYER_TWO_COLOR;
-            } else {
-                assert(false);
-            }
-
             for (var i = 0; i < move.gameOver.victoryCells.length; i++) {
                 var [row, col] = move.gameOver.victoryCells[i];
 
                 var cellId = Viz.getCellId(row, col);
 
-                $("#" + cellId).css("background-color", color);
+                $("#" + cellId).css("background-color", "gray");
 
                 $("#" + cellId).css("outline",  "black solid 2px");
 
@@ -684,7 +410,7 @@ function makeAiMove(game) {
          
 var cell_size = 50;
 
-var GAME = new ConnectFour(FIRST_PLAYER, NUM_ROWS, NUM_COLS);
+var GAME = new Othello(FIRST_PLAYER, NUM_ROWS, NUM_COLS);
 
 // Global variable to hold the Viz class
 var VIZ = new Viz("#board", NUM_ROWS, NUM_COLS, cell_size);
