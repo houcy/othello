@@ -4,12 +4,12 @@ function assert(condition) {
     }
 }
 
-NUM_ROWS = 4;
-NUM_COLS = 4;
+NUM_ROWS = 8;
+NUM_COLS = 8;
 
 CAPTURE_DELAY = 700;
 
-MIN_MAX_DEPTH = 6;
+MIN_MAX_DEPTH = 5;
 
 EMPTY = 0;
 
@@ -594,15 +594,27 @@ function cellClick(row, col) {
         alert("The computer passed a turn.");
     }
 
-    while (move.valid &&
-           GAME.gameOver == undefined &&
-           GAME.player == COMPUTER_PLAYER) {
+    function doAi() {
         move = makeAiMove(GAME);
         VIZ.drawMove(move);
 
         if (GAME.player == COMPUTER_PLAYER) {
             alert("You passed a turn.");
         }
+
+        if (move.valid &&
+            GAME.gameOver == undefined &&
+            GAME.player == COMPUTER_PLAYER) {
+            window.setTimeout(doAi, 300);
+        }
+
     }
+
+    if (move.valid &&
+        GAME.gameOver == undefined &&
+        GAME.player == COMPUTER_PLAYER) {
+        window.setTimeout(doAi, 300);
+    }
+
 }
 
