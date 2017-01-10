@@ -24,16 +24,8 @@ MINIMIZING_PLAYER = PLAYER_TWO;
 
 FIRST_PLAYER = PLAYER_ONE;
 
-var COMPUTER_PLAYER;
-var HUMAN_PLAYER;
-
-if (Math.random() < 0.5) {
-    COMPUTER_PLAYER = PLAYER_ONE;
-    HUMAN_PLAYER = PLAYER_TWO;
-} else {
-    COMPUTER_PLAYER = PLAYER_TWO;
-    HUMAN_PLAYER = PLAYER_ONE;
-}
+HUMAN_PLAYER = PLAYER_ONE; 
+COMPUTER_PLAYER = PLAYER_TWO;
 
 /*******************************************************************************
  * Move is the interface between Othello and Viz
@@ -172,11 +164,11 @@ class Othello {
         }
     }
 
-    tryCaptureDrDc(row, col, dr, dc) {
+    tryCaptureDrDc(player, row, col, dr, dc) {
 
         var otherPlayer;
 
-        if (this.player == PLAYER_ONE) {
+        if (player == PLAYER_ONE) {
             otherPlayer = PLAYER_TWO;
         } else {
             otherPlayer = PLAYER_ONE;
@@ -193,23 +185,23 @@ class Othello {
             col += dc;
         }
 
-        if (this.getCell(row, col) == this.player)  {
+        if (this.getCell(row, col) == player)  {
             return captured;
         } else {
             return [];
         }
     }
 
-    tryCapture(row, col) {
-        var capturedUp = this.tryCaptureDrDc(row, col, -1, 0);
-        var capturedDown = this.tryCaptureDrDc(row, col, 1, 0);
-        var capturedLeft = this.tryCaptureDrDc(row, col, 0, -1);
-        var capturedRight = this.tryCaptureDrDc(row, col, 0, 1);
+    tryCapture(player, row, col) {
+        var capturedUp = this.tryCaptureDrDc(player, row, col, -1, 0);
+        var capturedDown = this.tryCaptureDrDc(player, row, col, 1, 0);
+        var capturedLeft = this.tryCaptureDrDc(player, row, col, 0, -1);
+        var capturedRight = this.tryCaptureDrDc(player, row, col, 0, 1);
 
-        var capturedDiagonal1 = this.tryCaptureDrDc(row, col, 1, 1);
-        var capturedDiagonal2 = this.tryCaptureDrDc(row, col, 1, -1);
-        var capturedDiagonal3 = this.tryCaptureDrDc(row, col, -1, 1);
-        var capturedDiagonal4 = this.tryCaptureDrDc(row, col, -1, -1);
+        var capturedDiagonal1 = this.tryCaptureDrDc(player, row, col, 1, 1);
+        var capturedDiagonal2 = this.tryCaptureDrDc(player, row, col, 1, -1);
+        var capturedDiagonal3 = this.tryCaptureDrDc(player, row, col, -1, 1);
+        var capturedDiagonal4 = this.tryCaptureDrDc(player, row, col, -1, -1);
 
 
         return capturedUp
@@ -227,7 +219,7 @@ class Othello {
         assert(row >= 0 && row < this.numRows);
         assert(col >= 0 && col < this.numCols);
 
-        var captured = this.tryCapture(row, col);
+        var captured = this.tryCapture(this.player, row, col);
 
         if (this.isMoveInvalid(row, col, captured.length)) {
             return new Move(false, undefined, undefined, undefined, undefined, undefined);
@@ -244,10 +236,20 @@ class Othello {
 
         var move = new Move(true, row, col, this.player, captured, this.gameOver);
 
+        // TODO: dedup
         if (this.player == PLAYER_ONE) {
             this.player = PLAYER_TWO;
         } else {
             this.player = PLAYER_ONE;
+        }
+
+        // If this.player must pass
+        if (this.gameOver == undefined && !this.canMove(this.player)) {
+            if (this.player == PLAYER_ONE) {
+                this.player = PLAYER_TWO;
+            } else {
+                this.player = PLAYER_ONE;
+            }
         }
 
         return move;
@@ -258,7 +260,7 @@ class Othello {
         for (var row = 0; row < this.numRows; row++) {
             for (var col = 0; col < this.numCols; col++) {
 
-                var captured = this.tryCapture(row, col);
+                var captured = this.tryCapture(player, row, col);
 
                 if (!this.isMoveInvalid(row, col, captured.length)) {
                     return true;
@@ -583,19 +585,16 @@ if (FIRST_PLAYER == COMPUTER_PLAYER) {
 
 function cellClick(row, col) {
 
+    // Ignores invalid moves from the human
+    assert(GAME.player == HUMAN_PLAYER);
     var move = GAME.makeMove(row, col);
     VIZ.drawMove(move);
 
-    if (move.valid && GAME.gameOver == undefined) {
-
-        // Delay doAiMove() so that the browser has time to draw the human
-        // player's move
-        function doAiMove() {
-            move = makeAiMove(GAME);
-            VIZ.drawMove(move);            
-        }
-
-        window.setTimeout(doAiMove, 100);
+    while (move.valid &&
+           GAME.gameOver == undefined &&
+           GAME.player == COMPUTER_PLAYER) {
+        move = makeAiMove(GAME);
+        VIZ.drawMove(move);
     }
 }
 
