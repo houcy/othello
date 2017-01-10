@@ -590,11 +590,19 @@ function cellClick(row, col) {
     var move = GAME.makeMove(row, col);
     VIZ.drawMove(move);
 
+    if (move.valid && GAME.player == HUMAN_PLAYER) {
+        alert("The computer passed a turn.");
+    }
+
     while (move.valid &&
            GAME.gameOver == undefined &&
            GAME.player == COMPUTER_PLAYER) {
         move = makeAiMove(GAME);
         VIZ.drawMove(move);
+
+        if (GAME.player == COMPUTER_PLAYER) {
+            alert("You passed a turn.");
+        }
     }
 }
 
