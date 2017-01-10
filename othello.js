@@ -400,19 +400,48 @@ class Node {
         return count;   
     }
 
+    getNumCorners(player) {
+        var numRows = this.game.numRows;
+        var numCols = this.game.numCols;
+        var corners =
+            [[0, 0],
+             [0, numCols - 1],
+             [numRows - 1, 0],
+             [numRows - 1, numCols - 1]];
+
+        var count = 0;
+
+        for (var i = 0; i < corners.length; i++) {
+            var [row, col] = corners[i];
+            if (this.game.matrix[row][col] == player) {
+                count += 1;
+            }
+        }
+
+        return count;
+    }
+
     // http://home.datacomm.ch/t_wolf/tw/misc/reversi/html/index.html
     // http://www.samsoft.org.uk/reversi/strategy.htm
     getNonLeafScore() {
-        var numPieces = this.game.countPieces(MAXIMIZING_PLAYER) -
-                        this.game.countPieces(MINIMIZING_PLAYER);
+        var numPieces =
+            this.game.countPieces(MAXIMIZING_PLAYER) -
+            this.game.countPieces(MINIMIZING_PLAYER);
 
-        var numAvailableMoves = this.getNumAvailableMoves(MAXIMIZING_PLAYER) -
-                                this.getNumAvailableMoves(MINIMIZING_PLAYER);
+        var numAvailableMoves =
+            this.getNumAvailableMoves(MAXIMIZING_PLAYER) -
+            this.getNumAvailableMoves(MINIMIZING_PLAYER);
 
-        var numPotential = this.getNumPotential(MAXIMIZING_PLAYER) -
-                           this.getNumPotential(MINIMIZING_PLAYER);
+        var numPotential =
+            this.getNumPotential(MAXIMIZING_PLAYER) -
+            this.getNumPotential(MINIMIZING_PLAYER);
+
+        var numCorners =
+            this.getNumCorners(MAXIMIZING_PLAYER) -
+            this.getNumCorners(MINIMIZING_PLAYER);
 
         return numPieces +
+               numCorners * 20 +
                numAvailableMoves * 6 +
                numPotential * 2;
     }
