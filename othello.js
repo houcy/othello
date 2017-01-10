@@ -592,6 +592,14 @@ class Viz {
 
             }
         }
+
+        if (move.gameOver != undefined) {
+            if (move.gameOver.victor == HUMAN_PLAYER) {
+                alert("You win!");
+            } else {
+                alert("You lose.")
+            }
+        }
     }
 }
 
