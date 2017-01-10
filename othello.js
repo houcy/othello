@@ -4,8 +4,8 @@ function assert(condition) {
     }
 }
 
-NUM_ROWS = 8;
-NUM_COLS = 8;
+NUM_ROWS = 4;
+NUM_COLS = 4;
 
 CAPTURE_DELAY = 700;
 
@@ -227,7 +227,6 @@ class Othello {
         assert(row >= 0 && row < this.numRows);
         assert(col >= 0 && col < this.numCols);
 
-
         var captured = this.tryCapture(row, col);
 
         if (this.isMoveInvalid(row, col, captured.length)) {
@@ -254,8 +253,54 @@ class Othello {
         return move;
     }
 
+    // returns true iff player has a valid move
+    canMove(player) {
+        for (var row = 0; row < this.numRows; row++) {
+            for (var col = 0; col < this.numCols; col++) {
+
+                var captured = this.tryCapture(row, col);
+
+                if (!this.isMoveInvalid(row, col, captured.length)) {
+                    return true;
+                } 
+
+            }
+        }
+
+        return false;
+    }
+
     checkGameOver() {
-        
+        if (!this.canMove(PLAYER_ONE) && !this.canMove(PLAYER_TWO)) {
+            var count = {};
+            count[PLAYER_ONE] = this.countPieces(PLAYER_ONE);
+            count[PLAYER_TWO] = this.countPieces(PLAYER_TWO);
+
+            var victor;
+            if (count[PLAYER_ONE] == count[PLAYER_TWO]) {
+                victor = undefined;
+            } else if (count[PLAYER_ONE] > count[PLAYER_TWO]) {
+                victor = PLAYER_ONE;
+            } else {
+                victor = PLAYER_TWO;
+            }
+
+            this.gameOver = new GameOver(victor, count);
+        }
+    }
+
+    countPieces(player) {
+        var count = 0;
+
+        for (var row = 0; row < this.numRows; row++) {
+            for (var col = 0; col < this.numCols; col++) {
+                if (this.matrix[row][col] == player) {
+                    count += 1;
+                }
+            }
+        }
+
+        return count;
     }
 }
 
@@ -279,23 +324,9 @@ class Node {
         return this.game.gameOver != undefined;
     }
 
-    countPieces(player) {
-        var count = 0;
-
-        for (var row = 0; row < this.game.numRows; row++) {
-            for (var col = 0; col < this.game.numCols; col++) {
-                if (this.game.matrix[row][col] == player) {
-                    count += 1;
-                }
-            }
-        }
-
-        return count;
-    }
-
     getNonLeafScore() {
-        return this.countPieces(MAXIMIZING_PLAYER) -
-               this.countPieces(MINIMIZING_PLAYER)
+        return this.game.countPieces(MAXIMIZING_PLAYER) -
+               this.game.countPieces(MINIMIZING_PLAYER);
     }
 
     getScore() {
