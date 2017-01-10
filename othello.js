@@ -9,7 +9,7 @@ NUM_COLS = 8;
 
 CAPTURE_DELAY = 700;
 
-MIN_MAX_DEPTH = 5;
+MIN_MAX_DEPTH = 4;
 
 EMPTY = 0;
 
@@ -86,6 +86,16 @@ class GameOver {
  * Othello class
  ******************************************************************************/
 class Othello {
+
+    // TODO: use
+    static getOpponent(player) {
+        if (player == PLAYER_ONE) {
+            return PLAYER_TWO;
+        } else {
+            return PLAYER_ONE;
+        }
+    }
+
 
     // player is either PLAYER_ONE or PLAYER_TWO, and indicates which player has
     // the next move
@@ -326,9 +336,85 @@ class Node {
         return this.game.gameOver != undefined;
     }
 
+    getNumAvailableMoves(player) {
+        var count = 0;
+
+        for (var row = 0; row < this.game.numRows; row++) {
+            for (var col = 0; col < this.game.numCols; col++) {
+
+                var captured = this.game.tryCapture(player, row, col);
+                var numCaptured = captured.length
+
+                if (!this.game.isMoveInvalid(row, col, numCaptured)) {
+                    count += 1;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    isPotential(player, row, col) {
+        if (this.game.matrix[row][col] != Othello.getOpponent(player)) {
+            return false;
+        }
+
+        // The row above
+        var a = this.game.getCell(row - 1, col - 1);
+        var b = this.game.getCell(row - 1, col);
+        var c = this.game.getCell(row - 1, col + 1);
+
+        // The row below
+        var d = this.game.getCell(row + 1, col - 1);
+        var e = this.game.getCell(row + 1, col);
+        var f = this.game.getCell(row + 1, col + 1);
+
+        // to the left
+        var g = this.game.getCell(row, col - 1);
+
+        // to the right
+        var h = this.game.getCell(row, col + 1);
+
+        return  a == EMPTY ||
+                b == EMPTY ||
+                c == EMPTY ||
+                d == EMPTY ||
+                e == EMPTY ||
+                f == EMPTY ||
+                g == EMPTY ||
+                h == EMPTY;
+    }
+
+    getNumPotential(player) {
+        var count = 0;
+
+        for (var row = 0; row < this.game.numRows; row++) {
+            for (var col = 0; col < this.game.numCols; col++) {
+
+                if (this.isPotential(player, row, col)) {
+                    count += 1;
+                }
+            }
+        }
+
+        return count;   
+    }
+
+    // http://home.datacomm.ch/t_wolf/tw/misc/reversi/html/index.html
+    // http://www.samsoft.org.uk/reversi/strategy.htm
     getNonLeafScore() {
-        return this.game.countPieces(MAXIMIZING_PLAYER) -
-               this.game.countPieces(MINIMIZING_PLAYER);
+        var numPieces = this.game.countPieces(MAXIMIZING_PLAYER) -
+                        this.game.countPieces(MINIMIZING_PLAYER);
+
+        var numAvailableMoves = this.getNumAvailableMoves(MAXIMIZING_PLAYER) -
+                                this.getNumAvailableMoves(MINIMIZING_PLAYER);
+
+        var numPotential = this.getNumPotential(MAXIMIZING_PLAYER) -
+                           this.getNumPotential(MINIMIZING_PLAYER);
+
+        return numPieces +
+               numAvailableMoves * 6 +
+               numPotential * 2;
     }
 
     getScore() {
